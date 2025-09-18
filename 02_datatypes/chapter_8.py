@@ -37,3 +37,8 @@ print(full_liquid)
 
 strong_tea = ["black tea"] * 3
 print(strong_tea)
+
+
+raw_spice_data = bytearray(b"CINNAMON")
+
+print(raw_spice_data)
