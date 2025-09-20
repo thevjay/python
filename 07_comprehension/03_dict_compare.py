@@ -6,4 +6,5 @@ tea_prices_inr = {
     "hot hojicha latte": 200,
 }    
 
-tea_prices_usd = { tea:price for tea,price in tea_prices_inr.items() if "iced" in tea }
+tea_prices_usd = { tea:price / 80 for tea,price in tea_prices_inr.items() if "iced" in tea }
+print(tea_prices_usd)
