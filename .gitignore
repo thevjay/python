@@ -1,3 +1,4 @@
 01_virtual/.venv/
 12_threads_concurrency/venv
 13_async_python/venv
+14_pydantic/venv
