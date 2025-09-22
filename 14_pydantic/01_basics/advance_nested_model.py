@@ -48,4 +48,4 @@ class Address(BaseModel):
 class Organization(BaseModel):
     name: str
     head_quarter: Address
-    branches: List[Address] = []
+    branches: List[Address] = [  ]
