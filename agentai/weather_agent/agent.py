@@ -3,12 +3,19 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import requests
 import os
+from pydantic import BaseModel, Field
+from typing import Optional
 
 import json
 
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPEN_AI_KEY"))
+
+def run_command(cmd: str):
+    result = os.system(cmd)
+    return result
+
 
 def get_weather(city: str):
     url = f"https://wttr.in/{city.lower()}?format=%C+%t"
@@ -20,9 +27,11 @@ def get_weather(city: str):
  
 
 available_tool={
-    "get_weather": get_weather
+    "get_weather": get_weather,
+    "run_command": run_command
 }
-# Zero Shot Prompting: Directly giving the insert to the model  
+
+
 SYSTEM_PROMPT = """
     You're an expert AI Assistant in resolving user queries using chain of thought.
     You work on START, PLAN and OUTPUT steps.
@@ -41,6 +50,7 @@ SYSTEM_PROMPT = """
 
     Available Tools: 
     - get_weather(city: str): Takes city name as an input string and return the weather info about the city.
+    - run_command(cmd: str): Takes a system linux command as string and executes the command on user's system and returns 
 
     Example 1:
     START: Hey, Can you solve 2 + 3 * 5 / 10
@@ -70,6 +80,12 @@ SYSTEM_PROMPT = """
 
 print("\n\n\n")
 
+class MyOutputFormat(BaseModel):
+    step: str = Field(...,description="The ID of the step. Example: PLAN, OUTPUT, TOOL")
+    content: Optional[str] = Field(None, description="The optional string content for the step")
+    tool: Optional[str] = Field(None, description="The ID of the tool to call.")
+    input: Optional[str] = Field(None, description="The input params for the tool")
+
 message_history = [
     { "role":"system","content": SYSTEM_PROMPT}
 ]
@@ -78,18 +94,19 @@ user_query = input("= ")
 message_history.append({ "role":"user","content": user_query })
 
 while True:
-    response=client.chat.completions.create(
+    response=client.chat.completions.parse(
     model="gemini-2.5-flash",
-    response_format={"type":"json_object"},
+    response_format=MyOutputFormat,
     messages=message_history
     )
 
     raw_result=(response.choices[0].message.content)
     message_history.append({"role":"assistant","content": raw_result})
 
-    parsed_result= json.loads(raw_result)
+    # parsed_result= json.loads(raw_result)
+    parsed_result = response.choices[0].message.parsed
 
-    if parsed_result.get("step") == "START":
+    if parsed_result.step  == "START":
         print("Fire", parsed_result.get("content"))
         continue
 
